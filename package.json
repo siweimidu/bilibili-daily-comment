@@ -1,0 +1,9 @@
+{
+  "name": "bilibili-daily-comment",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}
