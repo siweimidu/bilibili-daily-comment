@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { ROOT, OUT_DIR, readJson, spaceVideos, pinnedComment, shanghaiDay, shanghaiDayOfUnix, setGap, hasLogin } from "./lib.mjs";
+import { ROOT, OUT_DIR, readJson, spaceVideos, pinnedComment, api, shanghaiDay, shanghaiDayOfUnix, setGap, hasLogin } from "./lib.mjs";
 
 const cfg = readJson(path.join(ROOT, "config.json"));
 const ups = readJson(path.join(ROOT, "ups.json"));
@@ -37,10 +37,20 @@ for (const up of ups) {
       if (!r.ok) stats.errors.push({ mid: up.mid, stage: "reply", bvid: v.bvid, code: r.code });
     } catch (e) {
       stats.errors.push({ mid: up.mid, stage: "reply", bvid: v.bvid, message: String(e.message || e) });
-      continue;
     }
-    if (!pin) { stats.noPin += 1; continue; }
-    stats.withPin += 1;
+    let desc = "";
+    if (!pin) {
+      // 没置顶的视频：退回用视频简介（很多 UP 的日报清单其实写在简介里）
+      stats.noPin += 1;
+      try {
+        const d = await api("https://api.bilibili.com/x/web-interface/view?bvid=" + v.bvid, { ref: "https://www.bilibili.com/video/" + v.bvid });
+        desc = (d && d.data && (d.data.desc || "")) || "";
+      } catch (e) {
+        stats.errors.push({ mid: up.mid, stage: "desc", bvid: v.bvid, message: String(e.message || e) });
+      }
+    } else {
+      stats.withPin += 1;
+    }
     items.push({
       bvid: v.bvid,
       aid: v.aid,
@@ -49,10 +59,11 @@ for (const up of ups) {
       title: v.title,
       publishedAt: v.created,
       views: v.play || 0,
-      pinLikes: pin.like || 0,
-      pinAuthor: (pin.member && pin.member.uname) || "",
-      pinCtime: pin.ctime || 0,
-      text: (pin.content && pin.content.message) || "",
+      pinLikes: pin ? (pin.like || 0) : 0,
+      pinAuthor: (pin && pin.member && pin.member.uname) || "",
+      pinCtime: (pin && pin.ctime) || 0,
+      text: pin ? ((pin.content && pin.content.message) || "") : "",
+      desc,
     });
   }
   console.log("[collect] " + up.name + " 当天视频 " + todays.length + " 条");
