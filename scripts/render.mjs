@@ -45,7 +45,10 @@ function jaccard(a, b) {
 // 拉丁词/数字实体，用来判同一件事（Gemini 4 Carbon / Copilot Fusion 这类）
 function tokens(s) {
   const set = new Set();
-  for (const m of String(s).matchAll(/[A-Za-z][A-Za-z0-9.+_-]*|\d+(?:\.\d+)?/g)) {
+  const norm = String(s)
+    .replace(/Artificial\s+Analysis/gi, " AA ")
+    .replace(/人工分析/g, " AA ");
+  for (const m of norm.matchAll(/[A-Za-z][A-Za-z0-9.+_-]*|\d+(?:\.\d+)?/g)) {
     const w = m[0].toLowerCase().replace(/[.。]+$/, "");
     if (w.length >= 2 || /^\d+$/.test(w)) set.add(w);   // 版本号「4」必须留，"Gemini 4 Carbon" 靠它区分 3 和 4
   }
@@ -80,65 +83,36 @@ function cleanTitle(s) {
   return t.trim();
 }
 
-const chapterRe = new RegExp(cfg.chapterPatterns.join("|"));
-const offTopicRe = new RegExp(cfg.offTopicPatterns.join("|"), "i");
-// 拉丁关键词必须独立成词，否则 "AI" 会匹配到 Gmail / explain 里面
-const latinKw = cfg.aiKeywords.filter((k) => /^[A-Za-z0-9.+_-]+$/.test(k));
-const cjkKw = cfg.aiKeywords.filter((k) => !/^[A-Za-z0-9.+_-]+$/.test(k));
-const aiRe = new RegExp(
-  "(" + latinKw.map((k) => "(?<![A-Za-z0-9])" + k.replace(/[.+]/g, "\\$&") + "(?![A-Za-z0-9])").join("|") + ")"
-  + "|(" + cjkKw.join("|") + ")",
-  "i"
-);
-const actionRe = new RegExp(cfg.actionKeywords.join("|"));
-const linkRe = /https?:\/\/|b23\.tv|BV[0-9A-Za-z]{10}/;
-
-function keepSegment(t) {
-  if (!t || t.length < cfg.minItemLength) return "short";
-  if (chapterRe.test(t)) return "chapter";
-  if (linkRe.test(t)) return "link";
-  if (offTopicRe.test(t)) return "offtopic";
-  if (cfg.requireAiKeyword && !aiRe.test(t)) return "offtopic";
-  if (!actionRe.test(t)) return "noaction";
-  return "";
-}
-
-const dropped = { short: 0, chapter: 0, link: 0, offtopic: 0, noaction: 0, pinlownews: 0, history: 0, titleFallback: 0 };
+// —— 不做任何内容过滤：有置顶按时间戳拆；没置顶用视频简介；简介也没用就用标题 ——
 const pool = [];
 let splitPins = 0;
 
+function itemsFromDesc(desc) {
+  const lines = String(desc).split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  return lines.map((l) => l.replace(/^\s*\d{1,2}\s*[.、．:：)）]\s*/, "").trim()).filter(Boolean);
+}
+
 for (const it of raw.items) {
   const text = norm(it.text);
-  if (!text) continue;
-  const parts = cfg.splitTimeline ? splitTimeline(text) : null;
-  if (parts) splitPins++;
-  const pieces = parts || [trimEdges(text)];
-
-  // 一条置顶只有在「大部分分段确实是资讯」时才被当成日报清单；
-  // 否则它只是视频章节目录或闲聊感想，整条丢掉（价格 & 开放时间 / 输出示例 1 这种就是章节）
-  const good = [];
-  for (const p of pieces) {
-    const why = keepSegment(p);
-    if (why) { dropped[why] += 1; continue; }
-    good.push(p);
+  const desc = String(it.desc || "").trim();
+  if (text) {
+    const parts = cfg.splitTimeline ? splitTimeline(text) : null;
+    if (parts) splitPins++;
+    const pieces = parts || [trimEdges(text)];
+    for (const p of pieces) {
+      if (!p) continue;
+      pool.push({ text: p, heat: Number(it.pinLikes) || 0, bvid: it.bvid, views: it.views, src: "pin" });
+    }
+  } else {
+    // 无置顶：简介够长就用简介拆条，否则退回视频标题
+    const fromDesc = desc.length >= 12 ? itemsFromDesc(desc) : [];
+    if (fromDesc.length) {
+      for (const p of fromDesc) pool.push({ text: p, heat: 0, bvid: it.bvid, views: it.views, src: "desc" });
+    } else {
+      const t = cleanTitle(it.title);
+      if (t) pool.push({ text: t, heat: 0, bvid: it.bvid, views: it.views, src: "title" });
+    }
   }
-  const ratio = pieces.length ? good.length / pieces.length : 0;
-  if (cfg.debugPins) console.log("[pin] " + it.bvid + " " + good.length + "/" + pieces.length + " = " + ratio.toFixed(2) + (parts ? "" : " (no-timeline)"));
-
-  // 置顶要么是纯章节目录（比例极低），要么整条没什么能用的：那就把视频标题当资讯
-  const useTitle = good.length === 0 || (parts && ratio < cfg.titleFallbackRatio);
-  if (useTitle) {
-    const t = cleanTitle(it.title);
-    const why = keepSegment(t);
-    if (why) { dropped.titleFallback += 1; continue; }
-    pool.push({ text: t, heat: Number(it.pinLikes) || 0, bvid: it.bvid, views: it.views, fromTitle: true });
-    continue;
-  }
-  if (parts && ratio < cfg.pinNewsRatio) {
-    dropped.pinlownews += 1;
-    continue;
-  }
-  for (const p of good) pool.push({ text: p, heat: Number(it.pinLikes) || 0, bvid: it.bvid, views: it.views });
 }
 
 function sharedTokens(a, b) {
@@ -153,9 +127,24 @@ function sameNews(a, b) {
   if (jaccard(a.grams, b.grams) >= cfg.dedupeThreshold) return true;
   if (a.tokens.size < 2 || b.tokens.size < 2) return false;
   const shared = sharedTokens(a.tokens, b.tokens);
-  // 只共享 OpenAI / ChatGPT / Gemini 这种泛词不算同一件事，否则互不相关的新闻会被并成一条
+  if (shared.length < 2) return false;
   const specific = shared.filter((t) => !genericTokens.has(t));
-  if (shared.length < 2 || specific.length === 0) return false;
+  const identical = a.tokens.size === b.tokens.size && shared.length === a.tokens.size;
+  // 实体集合完全相同（gemini/4/carbon、openai/chatgpt/businesses）→ 同一件事
+  if (identical && specific.length >= 1) return true;
+  // 忽略泛组织词后，独特实体的 Jaccard 高（如 Gemini 4 Carbon / carbon+4）→ 同一件事
+  const specA = new Set([...a.tokens].filter((t) => !genericTokens.has(t)));
+  const specB = new Set([...b.tokens].filter((t) => !genericTokens.has(t)));
+  if (specA.size && specB.size) {
+    let inter = 0;
+    for (const t of specA) if (specB.has(t)) inter++;
+    const uni = specA.size + specB.size - inter;
+    if (inter >= 2 && uni && inter / uni >= 0.5) return true;
+  }
+  // 一方实体是另一方真子集（只有 Google/DeepMind/AI 泛实体打底）→ 是不同新闻，别并
+  if (containment(a.tokens, b.tokens) >= 0.999) return false;
+  // 其余情况：至少 2 个非泛词实体且包含度达标才算同一件事
+  if (specific.length < 2) return false;
   return containment(a.tokens, b.tokens) >= cfg.tokenContainment;
 }
 
@@ -173,25 +162,8 @@ for (const cand of pool) {
   kept.push(rec);
 }
 
-// 跨天去旧闻：前几日已经报过的，今天不再重复
-const historyFile = path.join(OUT_DIR, "_history.json");
-let history = {};
-try { history = JSON.parse(fs.readFileSync(historyFile, "utf8")); } catch { history = {}; }
+// —— 不做跨天去旧闻，所有当日条目全部保留 ——
 let finalItems = kept;
-if (cfg.dropSeenHistory) {
-  const past = [];
-  for (const [d, list] of Object.entries(history)) {
-    if (d === day) continue;
-    for (const t of list) past.push({ grams: bigrams(t), tokens: tokens(t) });
-  }
-  finalItems = kept.filter((k) => {
-    const hit = past.some((p) => sameNews(p, k));
-    if (hit) dropped.history += 1;
-    return !hit;
-  });
-}
-history[day] = finalItems.map((k) => k.text);
-fs.writeFileSync(historyFile, JSON.stringify(history, null, 2));
 
 if (cfg.sortMode === "heat") finalItems.sort((a, b) => b.heat - a.heat || b.sources - a.sources || b.views - a.views);
 else finalItems.sort((a, b) => b.sources - a.sources || b.heat - a.heat || b.views - a.views);
@@ -217,9 +189,8 @@ const lines = shown.map((it, i) => {
 
 const header = day + " 置顶评论 · 共 " + shown.length + " 条";
 const stat = "统计：当天视频 " + raw.stats.todayVideos + " / 有置顶 " + raw.stats.withPin + " / 无置顶跳过 " + raw.stats.noPin
-  + " / 时间轴置顶 " + splitPins + " / 合并 " + kept.reduce((n, k) => n + k.sources - 1, 0)
-  + " / 丢[太短 " + dropped.short + " 章节 " + dropped.chapter + " 链接 " + dropped.link + " 非AI " + dropped.offtopic
-  + " 无动作 " + dropped.noaction + " 整条非资讯 " + dropped.pinlownews + " 旧闻 " + dropped.history + "] / 异常 " + (raw.stats.errors ? raw.stats.errors.length : 0);
+  + " / 时间轴置顶 " + splitPins + " / 合并重复 " + kept.reduce((n, k) => n + k.sources - 1, 0)
+  + " / 共 " + shown.length + " 条 / 异常 " + (raw.stats.errors ? raw.stats.errors.length : 0);
 
 const out = [header, ""].concat(lines.length ? lines : ["（今天没有可用的置顶评论）"]).concat(["", stat]).join("\n");
 
