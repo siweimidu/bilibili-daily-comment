@@ -155,3 +155,11 @@ C:/Code/skills/bilibili-daily-comment/   （软链到 ~/.agents/skills/）
 - 基准账号配置：seen.json = [{ name, mid, scanVideos }]（默认求源索解）
 - 开关：config.json 的 dedupeAgainstSeen: true\n- 建库：ode scripts/build-seen.mjs → 写 out/_seen.json\n- daily.mjs 已按 build-seen → collect → render 顺序自动执行
 - 全量模式：ode scripts/daily.mjs --full（今天没发的账号用其最新一条兜底）
+
+
+## 硬约束（务必遵守）
+
+- **只要当天**：只统计「今天」发布的视频内容，**昨天（及更早）的信息一概不要**。
+- 禁止使用 `--full` 兜底（该模式会把账号最新一条=昨天的内容混进来），默认 `node scripts/daily.mjs` 即当天。
+- 代码层强制：`config.json` 的 `todayOnly: true`，render 会丢弃 `videoDate != 当天` 的所有条目。
+- 只有「已报道基准库」可以用历史视频（那是用来去重的，不进入日报）。
