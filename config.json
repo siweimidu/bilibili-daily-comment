@@ -216,31 +216,21 @@
     "智谱",
     "xAI",
     "Runway",
-    "DeepMind",
     "上海创智学院",
     "小红书",
     "DeepL",
     "腾讯",
-    "Carbon",
-    "Command Code",
     "微软"
   ],
   "companyRules": [
-    {
-      "name": "DeepMind",
-      "kws": [
-        "DeepMind",
-        "AlphaGenome",
-        "MuJoCo"
-      ]
-    },
     {
       "name": "xAI",
       "kws": [
         "xAI",
         "Grok",
         "马斯克",
-        "SpaceX"
+        "SpaceX",
+        "Cursor"
       ]
     },
     {
@@ -367,12 +357,6 @@
       ]
     },
     {
-      "name": "Cursor",
-      "kws": [
-        "Cursor"
-      ]
-    },
-    {
       "name": "JetBrains",
       "kws": [
         "JetBrains"
@@ -391,12 +375,6 @@
       ]
     },
     {
-      "name": "Carbon",
-      "kws": [
-        "^Carbon"
-      ]
-    },
-    {
       "name": "Command Code",
       "kws": [
         "Command Code"
@@ -408,6 +386,9 @@
         "Google",
         "谷歌",
         "Gemini",
+        "DeepMind",
+        "AlphaGenome",
+        "MuJoCo",
         "Antigravity",
         "Tabletop",
         "CarPlay",
@@ -416,7 +397,8 @@
         "Android",
         "Chrome",
         "MDN",
-        "Firefox"
+        "Firefox",
+        "Carbon"
       ]
     }
   ]
