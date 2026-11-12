@@ -6,7 +6,7 @@
   "sortMode": "heat",
   "decluster": true,
   "maxLines": 0,
-  "maxTextLength": 120,
+  "maxTextLength": 0,
   "showSource": false,
   "requestGapMs": 1200,
   "dedupeThreshold": 0.55,
