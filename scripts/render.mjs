@@ -87,7 +87,7 @@ function cleanTitle(s) {
 const pool = [];
 let splitPins = 0;
 
-const HEADER_RE = /^(今日内容|今日要闻|本期看点|AI动态|AI ?动态|科技公司|模型排行榜|头条|资讯|前瞻|目录|导语|总结|结尾|开场)\s*[:：]?$/;
+const HEADER_RE = /^(今日内容|今日要闻|本期看点|AI动态|AI ?动态|科技公司|模型排行榜|AI产品与模型|产品与模型|安全与监管|安全监管|算力与能源|算力能源|头条|资讯|前瞻|目录|导语|总结|结尾|开场|片尾致谢)\s*[:：]?$/;
 
 function cleanItemLine(s) {
   s = String(s).trim();
@@ -106,6 +106,7 @@ function isJunk(s) {
   if (/^https?:\/\//i.test(s)) return true;
   const em = s.replace(/^[\s📌🤖💡🔥⭐️🔔📢•·]+/, "").trim();
   if (HEADER_RE.test(em)) return true;
+  if (/^(开场速览|片尾致谢|今日速览|本期速览)\s*[：:]/.test(em)) return true;
   if (/^[📌🤖💡🔥⭐️🔔📢]{1,2}\s*$/.test(s)) return true;
   if (em.length <= 2) return true;
   return false;
