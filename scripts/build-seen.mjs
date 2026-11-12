@@ -35,18 +35,22 @@ const out = [];
 for (const up of seenUps) {
   let vlist = [];
   try { vlist = (await spaceVideos(up.mid, up.scanVideos || 50)).vlist || []; } catch (e) { console.error("[seen] " + up.name + " 获取视频失败: " + e.message); continue; }
+  // 只要最近 N 天（默认 4 天）内发的视频
+  const days = up.days || cfg.seenDays || 4;
+  const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
+  const recent = vlist.filter((v) => v.created >= cutoff);
   let got = 0;
-  for (const v of vlist) {
+  for (const v of recent) {
     let cs = [];
     try { cs = await ownerComments(v.aid, v.bvid, up.mid); } catch { cs = []; }
     for (const c of cs) {
       const text = (c.content && c.content.message) || "";
       if (!hasTimeline(text)) continue;   // 只要时间轴式清单
-      out.push({ name: up.name, mid: up.mid, date: shanghaiDayOfUnix(v.created), bvid: v.bvid, text });
+      out.push({ name: up.name, mid: up.mid, date: shanghaiDayOfUnix(v.created), bvid: v.bvid, text, rpid: c.rpid });
       got += 1;
     }
   }
-  console.log("[seen] " + up.name + " 视频 " + vlist.length + " 条，收集到时间轴评论 " + got + " 段");
+  console.log("[seen] " + up.name + " 近 " + days + " 天视频 " + recent.length + " 条，收集到时间轴评论 " + got + " 段");
 }
 
 const f = path.join(OUT_DIR, "_seen.json");
