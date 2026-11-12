@@ -87,31 +87,74 @@ function cleanTitle(s) {
 const pool = [];
 let splitPins = 0;
 
-function itemsFromDesc(desc) {
-  const lines = String(desc).split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
-  return lines.map((l) => l.replace(/^\s*\d{1,2}\s*[.、．:：)）]\s*/, "").trim()).filter(Boolean);
+const HEADER_RE = /^(今日内容|今日要闻|本期看点|AI动态|AI ?动态|科技公司|模型排行榜|头条|资讯|前瞻|目录|导语|总结|结尾|开场)\s*[:：]?$/;
+
+function cleanItemLine(s) {
+  s = String(s).trim();
+  s = s.replace(/^[【\[]\s*\d{1,2}:\d{2}(?::\d{2})?\s*[】\]]\s*/, ""); // 行首【00:05】/[00:05]
+  s = s.replace(/^\d{1,2}:\d{2}(?::\d{2})?\s*/, "");                    // 行首 00:08
+  s = s.replace(/\s*[【\[]\s*\d{1,2}:\d{2}(?::\d{2})?\s*[】\]]\s*$/, ""); // 行尾【00:03】/[03:10]
+  s = s.replace(/^\d{1,2}\s*[.、．:：)）·]\s*(?=\d{1,2}:\d{2})/, "");   // 1. 紧接时间
+  s = s.replace(/^\d{1,2}:\d{2}(?::\d{2})?\s*/, "");                    // 再剥一次前导时间
+  s = s.replace(/^\d{1,2}\s*[.、．:：)）·]\s*/, "");                    // 1. / 1、 / 1· / 1)
+  s = s.replace(/^[\s\-–—•·|]+/, "").trim();
+  return s;
+}
+
+function isJunk(s) {
+  if (!s) return true;
+  if (/^https?:\/\//i.test(s)) return true;
+  const em = s.replace(/^[\s📌🤖💡🔥⭐️🔔📢•·]+/, "").trim();
+  if (HEADER_RE.test(em)) return true;
+  if (/^[📌🤖💡🔥⭐️🔔📢]{1,2}\s*$/.test(s)) return true;
+  if (em.length <= 2) return true;
+  return false;
+}
+
+// 统一拆条：兼容各种时间戳/序号格式；带>=2个时间戳的按时间戳行取（滤掉标题/广告/闲聊），
+// 否则按「编号行」或整段取。置顶与简介都走这里，再择优。
+//   00:08 内容 ｜ 【00:05】 1. 内容 ｜ 1·内容 【00:03】 ｜ 1.00:11 内容 ｜ [03:10] 1·内容
+function extractListItems(text) {
+  const t = String(text || "");
+  const hasTimeline = (t.match(/\d{1,2}:\d{2}(?::\d{2})?/g) || []).length >= 2;
+  const lines = t.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  let src;
+  if (hasTimeline) {
+    src = lines.filter((l) => /\d{1,2}:\d{2}/.test(l));
+  } else {
+    const numbered = lines.filter((l) => /^\s*\d{1,2}\s*[.、．:：)）·]/.test(l));
+    src = numbered.length ? numbered : lines;
+  }
+  const out = [];
+  for (const ln of src) {
+    const s = cleanItemLine(ln);
+    if (isJunk(s)) continue;
+    out.push(s);
+  }
+  return out;
 }
 
 for (const it of raw.items) {
-  const text = norm(it.text);
+  const text = String(it.text || "");
   const desc = String(it.desc || "").trim();
-  if (text) {
-    const parts = cfg.splitTimeline ? splitTimeline(text) : null;
-    if (parts) splitPins++;
-    const pieces = parts || [trimEdges(text)];
-    for (const p of pieces) {
-      if (!p) continue;
-      pool.push({ text: p, heat: Number(it.pinLikes) || 0, bvid: it.bvid, views: it.views, src: "pin" });
-    }
+  // --full 兜底来的、属于别的日期的视频，条目前面标一下日期，避免把昨天新闻当今天
+  const tag = it.isFallback && it.videoDate && it.videoDate !== raw.date ? "〔" + it.videoDate.slice(5) + "〕" : "";
+  const pinItems = text ? extractListItems(text) : [];
+  const descItems = desc.length >= 8 ? extractListItems(desc) : [];
+  const sumLen = (a) => a.reduce((n, s) => n + s.length, 0);
+  // 置顶 vs 简介，选条目更多/更完整的那份（有的 UP 置顶标题被截断，简介是完整版）
+  let chosen = pinItems;
+  let src = "pin";
+  if (descItems.length && (descItems.length >= pinItems.length || (descItems.length >= Math.ceil(pinItems.length * 0.7) && sumLen(descItems) > sumLen(pinItems)))) {
+    chosen = descItems;
+    src = "desc";
+  }
+  if (chosen.length > 1 && src === "pin") splitPins++;
+  if (chosen.length) {
+    for (const p of chosen) pool.push({ text: tag + p, heat: src === "pin" ? (Number(it.pinLikes) || 0) : 0, bvid: it.bvid, views: it.views, src });
   } else {
-    // 无置顶：简介够长就用简介拆条，否则退回视频标题
-    const fromDesc = desc.length >= 12 ? itemsFromDesc(desc) : [];
-    if (fromDesc.length) {
-      for (const p of fromDesc) pool.push({ text: p, heat: 0, bvid: it.bvid, views: it.views, src: "desc" });
-    } else {
-      const t = cleanTitle(it.title);
-      if (t) pool.push({ text: t, heat: 0, bvid: it.bvid, views: it.views, src: "title" });
-    }
+    const t2 = cleanTitle(it.title);
+    if (t2) pool.push({ text: tag + t2, heat: 0, bvid: it.bvid, views: it.views, src: "title" });
   }
 }
 
@@ -183,7 +226,7 @@ if (cfg.decluster) {
 const shown = cfg.maxLines > 0 ? finalItems.slice(0, cfg.maxLines) : finalItems;
 
 const lines = shown.map((it, i) => {
-  const body = it.text.length > cfg.maxTextLength ? it.text.slice(0, cfg.maxTextLength).trimEnd() + "…" : it.text;
+  const body = (cfg.maxTextLength > 0 && it.text.length > cfg.maxTextLength) ? it.text.slice(0, cfg.maxTextLength).trimEnd() + "…" : it.text;
   return cfg.showSource ? (i + 1) + ". " + body + " · " + it.bvid : (i + 1) + ". " + body;
 });
 
