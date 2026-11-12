@@ -180,3 +180,14 @@ C:/Code/skills/bilibili-daily-comment/   （软链到 ~/.agents/skills/）
 - **窗口 = 最近 4 天**（`seen.json` 的 `days: 4` / `config.json` 的 `seenDays: 4`）。
 - 这 4 天内该账号**所有视频**的置顶评论、以及被拆成**两段的时间轴长评论**，全部纳入「已报道库」，用来从日报里去重。
 - 建库：`node scripts/build-seen.mjs`（自动按近 4 天过滤，并同时抓置顶区+热评区的 UP 主长评论，含两段拆分）。
+
+
+## 输出格式规范（最终 · 最重要）
+
+1. **按公司归并**：同一家公司的多条信息合并成**一条**，条目之间用「；」分隔（如「Google：…；…；…」）。
+2. **按重要性排序**：公司优先级见 `config.json` 的 `companyOrder`（NVIDIA > OpenAI > Anthropic > Google > 字节跳动 > 百度 > 阿里 > DeepSeek > 智谱 > xAI > Runway > DeepMind > 上海创智学院 > 小红书 > DeepL > 腾讯 > Carbon > Command Code ……）。
+3. **带序号**：每条前面加「1. 2. 3. …」。
+4. **每次输出用可复制的代码块**（```text … ```）。
+5. 公司识别规则见 `config.json` 的 `companyRules`；识别不到的零散条目，保留原文单列在最后。
+
+> 渲染会自动写出 `out/latest.md`（纯文本）与 `out/latest_block.txt`（含 ```text 围栏，可直接复制）。
