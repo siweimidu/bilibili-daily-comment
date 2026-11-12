@@ -200,5 +200,6 @@
     "for"
   ],
   "historySimilarity": 0.7,
-  "dedupeAgainstSeen": true
+  "dedupeAgainstSeen": true,
+  "todayOnly": true
 }
