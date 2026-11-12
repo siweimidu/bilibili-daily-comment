@@ -281,6 +281,10 @@ const beforeMerge = finalItems.length;
 finalItems = mergeSameEventPass(finalItems);
 const mergedSameEvent = beforeMerge - finalItems.length;
 
+// 重要性打分：动作词越多越靠前（组内排序用）
+const IMP_WORDS = ["IPO", "收购", "并购", "融资", "罢免", "离职", "起诉", "发布", "开源", "上线", "推出", "正式", "重大", "首次", "免费", "开放", "突破", "登顶", "裁员"];
+function impScore(t) { let s = 0; for (const k of IMP_WORDS) if (t.includes(k)) s += 1; return s; }
+
 // —— 按公司归并 + 按重要性排序（用户规范）——
 function detectCompany(text) {
   const rules = cfg.companyRules || [];
@@ -313,22 +317,33 @@ groupList.sort((a, b) => {
   return (ia < 0 ? 9999 : ia) - (ib < 0 ? 9999 : ib) || b.heatSum - a.heatSum;
 });
 
-const entries = [];
+const lines = [];
+let idx = 0;
 for (const g of groupList) {
   const seenTxt = new Set();
   const parts = [];
-  for (const it of g.items) {
+  const ordered = g.items.slice().sort((a, b) => (b.heat || 0) - (a.heat || 0) || impScore(b.text) - impScore(a.text) || (b.sources || 0) - (a.sources || 0));
+  for (const it of ordered) {
     const t = it.text.replace(/[；;。.\s、,，]+$/, "");
     if (!t || seenTxt.has(t)) continue;
     seenTxt.add(t);
     parts.push(t);
   }
-  entries.push(g.name + "：" + parts.join("；"));
+  if (!parts.length) continue;
+  idx += 1;
+  if (parts.length === 1) {
+    lines.push(idx + ". " + g.name + "：" + parts[0]);   // 只有一条：公司名 + 内容同行
+  } else {
+    lines.push(idx + ". " + g.name + "：");               // 多条：公司名一行，下面每条各占一行
+    for (const p of parts) lines.push("   " + p);
+  }
 }
-for (const it of singles) entries.push(it.text.replace(/[；;。.\s、,，]+$/, ""));
-
-const shownEntries = cfg.maxLines > 0 ? entries.slice(0, cfg.maxLines) : entries;
-const lines = shownEntries.map((e, i) => (i + 1) + ". " + e);
+for (const it of singles) {
+  const t = it.text.replace(/[；;。.\s、,，]+$/, "");
+  if (!t) continue;
+  idx += 1;
+  lines.push(idx + ". " + t);
+}
 
 const stat = "统计：当天视频 " + raw.stats.todayVideos + " / 有置顶 " + raw.stats.withPin + " / 无置顶跳过 " + raw.stats.noPin
   + " / 时间轴置顶 " + splitPins + " / 合并重复 " + kept.reduce((n, k) => n + k.sources - 1, 0)
