@@ -147,3 +147,11 @@ C:/Code/skills/bilibili-daily-comment/   （软链到 ~/.agents/skills/）
 - **清单空了**：看 report 末行统计的丢弃明细，通常是 aiKeywords 或 actionKeywords 太严
 - **某条该出现却没出现**：`pinNewsRatio` 可能把整条置顶判成章节/闲聊了，用 `debugPins: true` 打印每条置顶的通过率
 - **改了 lib.mjs 的置顶判定要重跑 collect**：判定发生在抓取阶段，只重跑 render 不生效
+
+## 已报道基准账号（去重）
+
+可以把某个账号设为「已报道」基准：把他发过的视频下的置顶/热评时间轴清单（含被拆成两段的长评论）收集成库，日报里凡是与他重复的条目会被去掉，只留没被他报道过的。
+
+- 基准账号配置：seen.json = [{ name, mid, scanVideos }]（默认求源索解）
+- 开关：config.json 的 dedupeAgainstSeen: true\n- 建库：ode scripts/build-seen.mjs → 写 out/_seen.json\n- daily.mjs 已按 build-seen → collect → render 顺序自动执行
+- 全量模式：ode scripts/daily.mjs --full（今天没发的账号用其最新一条兜底）
