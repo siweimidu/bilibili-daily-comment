@@ -216,11 +216,38 @@
     "智谱",
     "xAI",
     "Runway",
+    "DeepMind",
     "上海创智学院",
     "小红书",
     "DeepL",
     "腾讯",
-    "微软"
+    "微软",
+    "Meta",
+    "亚马逊",
+    "苹果",
+    "AMD",
+    "华为",
+    "小米",
+    "美团",
+    "网易",
+    "京东",
+    "商汤",
+    "科大讯飞",
+    "月之暗面",
+    "Hugging Face",
+    "Mistral",
+    "Perplexity",
+    "Tesla",
+    "三星",
+    "高通",
+    "台积电",
+    "Arm",
+    "联想",
+    "大疆",
+    "宇树",
+    "OpenRouter",
+    "Unsloth",
+    "Command Code"
   ],
   "companyRules": [
     {
@@ -230,7 +257,8 @@
         "Grok",
         "马斯克",
         "SpaceX",
-        "Cursor"
+        "Cursor",
+        "Optimus"
       ]
     },
     {
@@ -240,7 +268,8 @@
         "ByteDance",
         "张一鸣",
         "Spell",
-        "豆包"
+        "豆包",
+        "Doubao"
       ]
     },
     {
@@ -339,14 +368,19 @@
       "kws": [
         "腾讯",
         "Tencent",
-        "元宝"
+        "元宝",
+        "TX",
+        "微信",
+        "WeChat",
+        "QQ"
       ]
     },
     {
       "name": "微软",
       "kws": [
         "微软",
-        "Microsoft"
+        "Microsoft",
+        "Copilot"
       ]
     },
     {
@@ -375,6 +409,18 @@
       ]
     },
     {
+      "name": "OpenRouter",
+      "kws": [
+        "OpenRouter"
+      ]
+    },
+    {
+      "name": "Unsloth",
+      "kws": [
+        "Unsloth"
+      ]
+    },
+    {
       "name": "Command Code",
       "kws": [
         "Command Code"
@@ -399,6 +445,174 @@
         "MDN",
         "Firefox",
         "Carbon"
+      ]
+    },
+    {
+      "name": "Meta",
+      "kws": [
+        "Meta",
+        "Llama"
+      ]
+    },
+    {
+      "name": "亚马逊",
+      "kws": [
+        "亚马逊",
+        "Amazon",
+        "AWS"
+      ]
+    },
+    {
+      "name": "苹果",
+      "kws": [
+        "苹果",
+        "Apple",
+        "iPhone",
+        "iOS"
+      ]
+    },
+    {
+      "name": "AMD",
+      "kws": [
+        "AMD",
+        "MI300",
+        "锐龙"
+      ]
+    },
+    {
+      "name": "华为",
+      "kws": [
+        "华为",
+        "Huawei",
+        "昇腾",
+        "鸿蒙"
+      ]
+    },
+    {
+      "name": "小米",
+      "kws": [
+        "小米",
+        "Xiaomi",
+        "MiMo"
+      ]
+    },
+    {
+      "name": "美团",
+      "kws": [
+        "美团",
+        "LongCat"
+      ]
+    },
+    {
+      "name": "网易",
+      "kws": [
+        "网易",
+        "NetEase"
+      ]
+    },
+    {
+      "name": "京东",
+      "kws": [
+        "京东",
+        "JD"
+      ]
+    },
+    {
+      "name": "商汤",
+      "kws": [
+        "商汤",
+        "SenseTime"
+      ]
+    },
+    {
+      "name": "科大讯飞",
+      "kws": [
+        "科大讯飞",
+        "讯飞",
+        "iFlytek"
+      ]
+    },
+    {
+      "name": "月之暗面",
+      "kws": [
+        "月之暗面",
+        "Moonshot",
+        "Kimi"
+      ]
+    },
+    {
+      "name": "Hugging Face",
+      "kws": [
+        "Hugging Face",
+        "Sentence Transformers"
+      ]
+    },
+    {
+      "name": "Mistral",
+      "kws": [
+        "Mistral"
+      ]
+    },
+    {
+      "name": "Perplexity",
+      "kws": [
+        "Perplexity"
+      ]
+    },
+    {
+      "name": "Tesla",
+      "kws": [
+        "Tesla",
+        "特斯拉"
+      ]
+    },
+    {
+      "name": "三星",
+      "kws": [
+        "三星",
+        "Samsung"
+      ]
+    },
+    {
+      "name": "高通",
+      "kws": [
+        "高通",
+        "Qualcomm",
+        "骁龙"
+      ]
+    },
+    {
+      "name": "台积电",
+      "kws": [
+        "台积电",
+        "TSMC"
+      ]
+    },
+    {
+      "name": "Arm",
+      "kws": [
+        "Arm"
+      ]
+    },
+    {
+      "name": "联想",
+      "kws": [
+        "联想",
+        "Lenovo"
+      ]
+    },
+    {
+      "name": "大疆",
+      "kws": [
+        "大疆",
+        "DJI"
+      ]
+    },
+    {
+      "name": "宇树",
+      "kws": [
+        "宇树",
+        "Unitree"
       ]
     }
   ]
