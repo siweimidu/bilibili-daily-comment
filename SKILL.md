@@ -208,3 +208,9 @@ C:/Code/skills/bilibili-daily-comment/   （软链到 ~/.agents/skills/）
 - 公司之间按 `companyOrder` 的重要性顺序排列。
 - 代码块内**只放编号清单**，不放标题/日期/统计。
 - 已扩充常见 AI 头部公司到 `companyRules`（40+ 家）：OpenAI / Anthropic / Google / 字节跳动 / 百度 / 阿里 / DeepSeek / 智谱 / xAI / Runway / 腾讯（含简称 TX）/ 微软 / Meta / 亚马逊 / 苹果 / AMD / 华为 / 小米 / 美团 / 网易 / 京东 / 商汤 / 科大讯飞 / 月之暗面 / Hugging Face / Mistral / Perplexity / Tesla / 三星 / 高通 / 台积电 / Arm / 联想 / 大疆 / 宇树 / OpenRouter / Unsloth / MiniMax / JetBrains / vLLM / SGLang / Command Code 等；DeepMind、Carbon 归 Google。
+
+### 公司归属与收购合并（最终补充 · 重要）
+
+- **被收购 / 控股 / 子品牌一律归到母公司**，映射表在 `config.json` 的 `companyParent`：Hugging Face→NVIDIA、OpenRouter→Stripe、DeepMind→Google、Carbon→Google、Cursor→xAI、Character.AI→Google、Inflection→Microsoft、Scale AI→Meta、MosaicML→Databricks、Windsurf→Google 等。命中子名后自动上并到母公司。
+- 公司库已扩充到 70+（`config.companyRules` / `companyOrder`）：OpenAI、Anthropic、Google、字节跳动、百度、阿里、DeepSeek、智谱、xAI、Runway、腾讯(含TX)、微软、Meta、亚马逊、苹果、AMD、华为、小米、美团、网易、京东、商汤、科大讯飞、月之暗面、Hugging Face、Mistral、Perplexity、Tesla、三星、高通、台积电、Arm、联想、大疆、宇树、OpenRouter、Unsloth、Stripe、Cohere、Stability AI、Character.AI、Inflection、Scale AI、Figure、Groq、Together AI、Midjourney、Databricks、阶跃星辰、百川智能、零一万物、昆仑万维、云从、旷视、依图、寒武纪、摩尔线程、燧原、壁仞、中芯国际、浪潮、中兴、荣耀、OPPO、vivo 等。
+- 增删公司 / 调整归属：直接改 `config.json` 的 `companyRules`、`companyParent`、`companyOrder`。
