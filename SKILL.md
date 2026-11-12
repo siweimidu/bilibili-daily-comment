@@ -163,3 +163,12 @@ C:/Code/skills/bilibili-daily-comment/   （软链到 ~/.agents/skills/）
 - 禁止使用 `--full` 兜底（该模式会把账号最新一条=昨天的内容混进来），默认 `node scripts/daily.mjs` 即当天。
 - 代码层强制：`config.json` 的 `todayOnly: true`，render 会丢弃 `videoDate != 当天` 的所有条目。
 - 只有「已报道基准库」可以用历史视频（那是用来去重的，不进入日报）。
+
+
+## 去重规范（重要）
+
+- **跨账号同事件合并**：不同账号报道同一件事（如 Gemini Decision、Tabletop、文心=ERNIE 等），合并成一条，保留信息最全的一条。
+- **已报道基准 = 你的账号**：以「你的账号」发过的视频置顶/热评时间轴清单为基准，日报里凡是该账号**已经报道过的事件**一律去掉。
+  - 基准账号在 `seen.json` 指定（当前为 求源索解，mid=3546968106207327）；换成你本人的账号只需改这里的 `mid`。
+  - 先 `node scripts/build-seen.mjs` 建库，再渲染时自动去重。
+- 顺序：跨账号同事件合并 → 再去「已报道」→ 当天限制（todayOnly）。
