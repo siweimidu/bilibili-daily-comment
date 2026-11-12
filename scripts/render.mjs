@@ -48,9 +48,11 @@ function tokens(s) {
   const set = new Set();
   const norm = String(s)
     .replace(/Artificial\s+Analysis/gi, " AA ")
-    .replace(/人工分析/g, " AA ");
+    .replace(/人工分析/g, " AA ")
+    .replace(/文心/g, " ERNIE ");
   for (const m of norm.matchAll(/[A-Za-z][A-Za-z0-9.+_-]*|\d+(?:\.\d+)?/g)) {
-    const w = m[0].toLowerCase().replace(/[.。]+$/, "");
+    let w = m[0].toLowerCase().replace(/[.。]+$/, "");
+    if (/^[a-z]{4,}s$/.test(w)) w = w.slice(0, -1);   // 简单去复数：decisions→decision / sheets→sheet
     if (w.length >= 2 || /^\d+$/.test(w)) set.add(w);   // 版本号「4」必须留，"Gemini 4 Carbon" 靠它区分 3 和 4
   }
   return set;
@@ -208,6 +210,40 @@ function matchSeen(a, b) {
   return false;
 }
 
+// —— 跨账号同事件合并：同一件事不同账号不同措辞，并成一条 ——
+function jacSets(A, B) { let i = 0; for (const x of A) if (B.has(x)) i++; const u = A.size + B.size - i; return u ? i / u : 0; }
+function strongSet(tk) { const s = new Set(); for (const t of tk) { if (genericTokens.has(t)) continue; if (/^\d/.test(t)) continue; s.add(t); } return s; }
+function sameEvent(a, b) {
+  if (sameNews(a, b)) return true;
+  const sa = strongSet(a.tokens), sb = strongSet(b.tokens);
+  let inter = 0;
+  for (const x of sa) if (sb.has(x)) inter += 1;
+  if (!inter) return false;                    // 没有共同的独特实体 → 不是同一件事
+  if (jacSets(a.tokens, b.tokens) >= 0.5) return true; // 词集重合度高 → 合并
+  return false;
+}
+function mergeSameEventPass(items) {
+  const clusters = [];
+  for (const it of items) {
+    let placed = false;
+    for (const c of clusters) {
+      if (sameEvent(it, c.rep)) {
+        c.items.push(it);
+        if (it.text.length > c.rep.text.length) c.rep = it; // 保留信息更全的那条
+        placed = true;
+        break;
+      }
+    }
+    if (!placed) clusters.push({ rep: it, items: [it] });
+  }
+  return clusters.map((c) => {
+    const rep = Object.assign({}, c.rep);
+    rep.sources = c.items.reduce((n, x) => n + (x.sources || 1), 0);
+    rep.heat = c.items.reduce((n, x) => n + (x.heat || 0), 0);
+    return rep;
+  });
+}
+
 const kept = [];
 for (const cand of pool) {
   const rec = { text: cand.text, heat: cand.heat, bvid: cand.bvid, views: cand.views, sources: 1, grams: bigrams(cand.text), tokens: tokens(cand.text) };
@@ -240,6 +276,11 @@ if (cfg.dedupeAgainstSeen) {
   } catch (e) { /* 没建过 _seen.json 就跳过 */ }
 }
 
+// 跨账号同事件合并（Gemini Decision / Tabletop 等重复并成一条）
+const beforeMerge = finalItems.length;
+finalItems = mergeSameEventPass(finalItems);
+const mergedSameEvent = beforeMerge - finalItems.length;
+
 if (cfg.sortMode === "heat") finalItems.sort((a, b) => b.heat - a.heat || b.sources - a.sources || b.views - a.views);
 else finalItems.sort((a, b) => b.sources - a.sources || b.heat - a.heat || b.views - a.views);
 
@@ -265,7 +306,7 @@ const lines = shown.map((it, i) => {
 const header = day + " 置顶评论 · 共 " + shown.length + " 条";
 const stat = "统计：当天视频 " + raw.stats.todayVideos + " / 有置顶 " + raw.stats.withPin + " / 无置顶跳过 " + raw.stats.noPin
   + " / 时间轴置顶 " + splitPins + " / 合并重复 " + kept.reduce((n, k) => n + k.sources - 1, 0)
-  + " / 去已报道 " + seenRemoved + " / 共 " + shown.length + " 条 / 异常 " + (raw.stats.errors ? raw.stats.errors.length : 0);
+  + " / 合并同事件 " + mergedSameEvent + " / 去已报道 " + seenRemoved + " / 共 " + shown.length + " 条 / 异常 " + (raw.stats.errors ? raw.stats.errors.length : 0);
 
 const out = [header, ""].concat(lines.length ? lines : ["（今天没有可用的置顶评论）"]).concat(["", stat]).join("\n");
 
