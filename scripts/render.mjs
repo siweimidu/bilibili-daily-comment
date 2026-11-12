@@ -281,36 +281,66 @@ const beforeMerge = finalItems.length;
 finalItems = mergeSameEventPass(finalItems);
 const mergedSameEvent = beforeMerge - finalItems.length;
 
-if (cfg.sortMode === "heat") finalItems.sort((a, b) => b.heat - a.heat || b.sources - a.sources || b.views - a.views);
-else finalItems.sort((a, b) => b.sources - a.sources || b.heat - a.heat || b.views - a.views);
-
-// 同一视频的条目不相邻：整体顺序不变，只把撞车的往后挪
-if (cfg.decluster) {
-  const rest = finalItems.slice();
-  const mixed = [];
-  while (rest.length) {
-    const last = mixed.length ? mixed[mixed.length - 1].bvid : null;
-    let pick = rest.findIndex((x) => x.bvid !== last);
-    if (pick === -1) pick = 0;
-    mixed.push(rest.splice(pick, 1)[0]);
+// —— 按公司归并 + 按重要性排序（用户规范）——
+function detectCompany(text) {
+  const rules = cfg.companyRules || [];
+  for (const r of rules) {
+    for (const kw of (r.kws || [])) {
+      if (kw.startsWith("^")) { if (new RegExp(kw, "i").test(text)) return r.name; }
+      else if (/[A-Za-z]/.test(kw)) {
+        const esc = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        if (new RegExp("(^|[^A-Za-z])" + esc + "([^A-Za-z]|$)", "i").test(text)) return r.name;
+      } else if (text.includes(kw)) return r.name;
+    }
   }
-  finalItems = mixed;
+  return null;
 }
-const shown = cfg.maxLines > 0 ? finalItems.slice(0, cfg.maxLines) : finalItems;
 
-const lines = shown.map((it, i) => {
-  const body = (cfg.maxTextLength > 0 && it.text.length > cfg.maxTextLength) ? it.text.slice(0, cfg.maxTextLength).trimEnd() + "…" : it.text;
-  return cfg.showSource ? (i + 1) + ". " + body + " · " + it.bvid : (i + 1) + ". " + body;
+// 组内/组间默认按热度（≈重要性）
+finalItems.sort((a, b) => (b.heat || 0) - (a.heat || 0) || (b.sources || 0) - (a.sources || 0) || (b.views || 0) - (a.views || 0));
+
+const order = cfg.companyOrder || [];
+const groups = new Map();
+const singles = [];
+for (const it of finalItems) {
+  const co = detectCompany(it.text);
+  if (co) { if (!groups.has(co)) groups.set(co, []); groups.get(co).push(it); }
+  else singles.push(it);
+}
+const groupList = [...groups.entries()].map(([name, items]) => ({ name, items, heatSum: items.reduce((n, x) => n + (x.heat || 0), 0) }));
+groupList.sort((a, b) => {
+  const ia = order.indexOf(a.name), ib = order.indexOf(b.name);
+  return (ia < 0 ? 9999 : ia) - (ib < 0 ? 9999 : ib) || b.heatSum - a.heatSum;
 });
 
-const header = day + " 置顶评论 · 共 " + shown.length + " 条";
+const entries = [];
+for (const g of groupList) {
+  const seenTxt = new Set();
+  const parts = [];
+  for (const it of g.items) {
+    const t = it.text.replace(/[；;。.\s、,，]+$/, "");
+    if (!t || seenTxt.has(t)) continue;
+    seenTxt.add(t);
+    parts.push(t);
+  }
+  entries.push(g.name + "：" + parts.join("；"));
+}
+for (const it of singles) entries.push(it.text.replace(/[；;。.\s、,，]+$/, ""));
+
+const shownEntries = cfg.maxLines > 0 ? entries.slice(0, cfg.maxLines) : entries;
+const lines = shownEntries.map((e, i) => (i + 1) + ". " + e);
+
+const header = day + " 置顶评论 · 共 " + lines.length + " 条（按公司归并）";
 const stat = "统计：当天视频 " + raw.stats.todayVideos + " / 有置顶 " + raw.stats.withPin + " / 无置顶跳过 " + raw.stats.noPin
   + " / 时间轴置顶 " + splitPins + " / 合并重复 " + kept.reduce((n, k) => n + k.sources - 1, 0)
-  + " / 合并同事件 " + mergedSameEvent + " / 去已报道 " + seenRemoved + " / 共 " + shown.length + " 条 / 异常 " + (raw.stats.errors ? raw.stats.errors.length : 0);
+  + " / 合并同事件 " + mergedSameEvent + " / 去已报道 " + seenRemoved
+  + " / 归并前 " + finalItems.length + " 条 → 归并后 " + lines.length + " 条 / 异常 " + (raw.stats.errors ? raw.stats.errors.length : 0);
 
 const out = [header, ""].concat(lines.length ? lines : ["（今天没有可用的置顶评论）"]).concat(["", stat]).join("\n");
+const block = "```text\n" + out + "\n```";
 
 const reportFile = path.join(OUT_DIR, day, "report.md");
 fs.writeFileSync(reportFile, out + "\n");
 fs.writeFileSync(path.join(OUT_DIR, "latest.md"), out + "\n");
+fs.writeFileSync(path.join(OUT_DIR, "latest_block.txt"), block + "\n");
 console.log(out);
