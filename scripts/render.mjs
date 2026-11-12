@@ -139,6 +139,8 @@ function extractListItems(text) {
 for (const it of raw.items) {
   const text = String(it.text || "");
   const desc = String(it.desc || "").trim();
+  // 【硬约束】只要当天：视频发布日期不是今天的，一律不要（连 --full 兜底的昨天数据也丢掉）
+  if (cfg.todayOnly !== false && it.videoDate && it.videoDate !== raw.date) continue;
   // --full 兜底来的、属于别的日期的视频，条目前面标一下日期，避免把昨天新闻当今天
   const tag = it.isFallback && it.videoDate && it.videoDate !== raw.date ? "〔" + it.videoDate.slice(5) + "〕" : "";
   const pinItems = text ? extractListItems(text) : [];
