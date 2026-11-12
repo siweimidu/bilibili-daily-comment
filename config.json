@@ -199,5 +199,6 @@
     "max",
     "for"
   ],
-  "historySimilarity": 0.7
+  "historySimilarity": 0.7,
+  "dedupeAgainstSeen": true
 }
