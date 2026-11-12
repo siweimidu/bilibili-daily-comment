@@ -172,3 +172,11 @@ C:/Code/skills/bilibili-daily-comment/   （软链到 ~/.agents/skills/）
   - 基准账号在 `seen.json` 指定（当前为 求源索解，mid=3546968106207327）；换成你本人的账号只需改这里的 `mid`。
   - 先 `node scripts/build-seen.mjs` 建库，再渲染时自动去重。
 - 顺序：跨账号同事件合并 → 再去「已报道」→ 当天限制（todayOnly）。
+
+
+### 已报道基准窗口（更新 · 重要）
+
+- **基准账号 = 你的账号**（在 `seen.json` 指定；当前为 求源索解，改 `mid` 即可换成你本人主页）。
+- **窗口 = 最近 4 天**（`seen.json` 的 `days: 4` / `config.json` 的 `seenDays: 4`）。
+- 这 4 天内该账号**所有视频**的置顶评论、以及被拆成**两段的时间轴长评论**，全部纳入「已报道库」，用来从日报里去重。
+- 建库：`node scripts/build-seen.mjs`（自动按近 4 天过滤，并同时抓置顶区+热评区的 UP 主长评论，含两段拆分）。
