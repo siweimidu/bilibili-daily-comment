@@ -9,8 +9,9 @@ setGap(cfg.requestGapMs);
 const argv = process.argv.slice(2);
 const dIdx = argv.indexOf("--date");
 const day = dIdx >= 0 ? argv[dIdx + 1] : shanghaiDay();
+const full = argv.includes("--full");
 
-const stats = { ups: ups.length, listed: 0, todayVideos: 0, withPin: 0, noPin: 0, errors: [] };
+const stats = { ups: ups.length, listed: 0, todayVideos: 0, withPin: 0, noPin: 0, fallback: 0, errors: [] };
 const viaCount = {};
 const items = [];
 
@@ -28,7 +29,15 @@ for (const up of ups) {
   stats.listed += vlist.length;
   const todays = vlist.filter((v) => shanghaiDayOfUnix(v.created) === day);
   stats.todayVideos += todays.length;
-  for (const v of todays) {
+  // --full：某账号今天还没发，就用它最新一条视频（置顶或简介）兜底，保证覆盖全部账号
+  let picked = todays;
+  let viaFallback = false;
+  if (full && todays.length === 0 && vlist.length) {
+    picked = [vlist[0]];
+    viaFallback = true;
+    stats.fallback += 1;
+  }
+  for (const v of picked) {
     let pin = null;
     try {
       const r = await pinnedComment(v.aid, v.bvid, up.mid);
@@ -39,18 +48,14 @@ for (const up of ups) {
       stats.errors.push({ mid: up.mid, stage: "reply", bvid: v.bvid, message: String(e.message || e) });
     }
     let desc = "";
-    if (!pin) {
-      // 没置顶的视频：退回用视频简介（很多 UP 的日报清单其实写在简介里）
-      stats.noPin += 1;
-      try {
-        const d = await api("https://api.bilibili.com/x/web-interface/view?bvid=" + v.bvid, { ref: "https://www.bilibili.com/video/" + v.bvid });
-        desc = (d && d.data && (d.data.desc || "")) || "";
-      } catch (e) {
-        stats.errors.push({ mid: up.mid, stage: "desc", bvid: v.bvid, message: String(e.message || e) });
-      }
-    } else {
-      stats.withPin += 1;
+    // 简介一律抓：有的 UP 置顶里标题被截断，简介里反而是完整版
+    try {
+      const d = await api("https://api.bilibili.com/x/web-interface/view?bvid=" + v.bvid, { ref: "https://www.bilibili.com/video/" + v.bvid });
+      desc = (d && d.data && (d.data.desc || "")) || "";
+    } catch (e) {
+      stats.errors.push({ mid: up.mid, stage: "desc", bvid: v.bvid, message: String(e.message || e) });
     }
+    if (pin) stats.withPin += 1; else stats.noPin += 1;
     items.push({
       bvid: v.bvid,
       aid: v.aid,
@@ -64,9 +69,11 @@ for (const up of ups) {
       pinCtime: (pin && pin.ctime) || 0,
       text: pin ? ((pin.content && pin.content.message) || "") : "",
       desc,
+      isFallback: viaFallback,
+      videoDate: shanghaiDayOfUnix(v.created),
     });
   }
-  console.log("[collect] " + up.name + " 当天视频 " + todays.length + " 条");
+  console.log("[collect] " + up.name + " 当天视频 " + todays.length + " 条" + (viaFallback ? "（今天0，用最新 " + shanghaiDayOfUnix(vlist[0].created) + " 兜底）" : ""));
 }
 
 const dir = path.join(OUT_DIR, day);
