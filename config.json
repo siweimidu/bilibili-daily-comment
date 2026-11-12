@@ -247,7 +247,35 @@
     "宇树",
     "OpenRouter",
     "Unsloth",
-    "Command Code"
+    "Command Code",
+    "Stripe",
+    "Cohere",
+    "Stability AI",
+    "Character.AI",
+    "Inflection",
+    "Scale AI",
+    "Figure",
+    "Groq",
+    "Together AI",
+    "Midjourney",
+    "Databricks",
+    "阶跃星辰",
+    "百川智能",
+    "零一万物",
+    "昆仑万维",
+    "云从科技",
+    "旷视",
+    "依图",
+    "寒武纪",
+    "摩尔线程",
+    "燧原科技",
+    "壁仞科技",
+    "中芯国际",
+    "浪潮",
+    "中兴",
+    "荣耀",
+    "OPPO",
+    "vivo"
   ],
   "companyRules": [
     {
@@ -614,6 +642,204 @@
         "宇树",
         "Unitree"
       ]
+    },
+    {
+      "name": "Stripe",
+      "kws": [
+        "Stripe"
+      ]
+    },
+    {
+      "name": "Cohere",
+      "kws": [
+        "Cohere"
+      ]
+    },
+    {
+      "name": "Stability AI",
+      "kws": [
+        "Stability AI",
+        "Stable Diffusion"
+      ]
+    },
+    {
+      "name": "Character.AI",
+      "kws": [
+        "Character.AI",
+        "Character AI"
+      ]
+    },
+    {
+      "name": "Inflection",
+      "kws": [
+        "Inflection"
+      ]
+    },
+    {
+      "name": "Scale AI",
+      "kws": [
+        "Scale AI"
+      ]
+    },
+    {
+      "name": "Figure",
+      "kws": [
+        "Figure AI",
+        "Figure 01",
+        "Figure 02"
+      ]
+    },
+    {
+      "name": "Groq",
+      "kws": [
+        "Groq"
+      ]
+    },
+    {
+      "name": "Together AI",
+      "kws": [
+        "Together AI"
+      ]
+    },
+    {
+      "name": "Midjourney",
+      "kws": [
+        "Midjourney"
+      ]
+    },
+    {
+      "name": "Databricks",
+      "kws": [
+        "Databricks",
+        "MosaicML"
+      ]
+    },
+    {
+      "name": "阶跃星辰",
+      "kws": [
+        "阶跃",
+        "StepFun"
+      ]
+    },
+    {
+      "name": "百川智能",
+      "kws": [
+        "百川"
+      ]
+    },
+    {
+      "name": "零一万物",
+      "kws": [
+        "零一万物",
+        "01.AI"
+      ]
+    },
+    {
+      "name": "昆仑万维",
+      "kws": [
+        "昆仑万维",
+        "天工"
+      ]
+    },
+    {
+      "name": "云从科技",
+      "kws": [
+        "云从"
+      ]
+    },
+    {
+      "name": "旷视",
+      "kws": [
+        "旷视",
+        "Megvii"
+      ]
+    },
+    {
+      "name": "依图",
+      "kws": [
+        "依图",
+        "Yitu"
+      ]
+    },
+    {
+      "name": "寒武纪",
+      "kws": [
+        "寒武纪",
+        "Cambricon"
+      ]
+    },
+    {
+      "name": "摩尔线程",
+      "kws": [
+        "摩尔线程",
+        "Moore Threads"
+      ]
+    },
+    {
+      "name": "燧原科技",
+      "kws": [
+        "燧原"
+      ]
+    },
+    {
+      "name": "壁仞科技",
+      "kws": [
+        "壁仞",
+        "Biren"
+      ]
+    },
+    {
+      "name": "中芯国际",
+      "kws": [
+        "中芯国际",
+        "SMIC"
+      ]
+    },
+    {
+      "name": "浪潮",
+      "kws": [
+        "浪潮",
+        "Inspur"
+      ]
+    },
+    {
+      "name": "中兴",
+      "kws": [
+        "中兴",
+        "ZTE"
+      ]
+    },
+    {
+      "name": "荣耀",
+      "kws": [
+        "荣耀",
+        "HONOR"
+      ]
+    },
+    {
+      "name": "OPPO",
+      "kws": [
+        "OPPO"
+      ]
+    },
+    {
+      "name": "vivo",
+      "kws": [
+        "vivo"
+      ]
     }
-  ]
+  ],
+  "companyParent": {
+    "Hugging Face": "NVIDIA",
+    "OpenRouter": "Stripe",
+    "DeepMind": "Google",
+    "Carbon": "Google",
+    "Cursor": "xAI",
+    "Character.AI": "Google",
+    "Inflection": "Microsoft",
+    "Scale AI": "Meta",
+    "MosaicML": "Databricks",
+    "Windsurf": "Google",
+    "Anysphere": "xAI"
+  }
 }
