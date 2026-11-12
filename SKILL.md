@@ -200,3 +200,11 @@ C:/Code/skills/bilibili-daily-comment/   （软链到 ~/.agents/skills/）
   - **DeepMind → Google**（DeepMind 是谷歌子公司）
   - **Cursor → xAI**（按用户口径归到 xAI）
 - 归属规则维护在 `config.json` 的 `companyRules`，排序在 `companyOrder`。
+
+### 排布与排序规范（最终）
+
+- **公司各占一个序号、独占一行**（`N. 公司名：`）；该公司下**每条信息各占一行**，逐行显示，不再用「；」挤在一行。
+- **公司内部也按重要性排序**：热度 + 动作词权重（发布/开源/收购/融资/罢免/首次/正式/免费…越靠前）。
+- 公司之间按 `companyOrder` 的重要性顺序排列。
+- 代码块内**只放编号清单**，不放标题/日期/统计。
+- 已扩充常见 AI 头部公司到 `companyRules`（40+ 家）：OpenAI / Anthropic / Google / 字节跳动 / 百度 / 阿里 / DeepSeek / 智谱 / xAI / Runway / 腾讯（含简称 TX）/ 微软 / Meta / 亚马逊 / 苹果 / AMD / 华为 / 小米 / 美团 / 网易 / 京东 / 商汤 / 科大讯飞 / 月之暗面 / Hugging Face / Mistral / Perplexity / Tesla / 三星 / 高通 / 台积电 / Arm / 联想 / 大疆 / 宇树 / OpenRouter / Unsloth / MiniMax / JetBrains / vLLM / SGLang / Command Code 等；DeepMind、Carbon 归 Google。
