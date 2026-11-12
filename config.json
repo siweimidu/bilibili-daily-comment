@@ -202,5 +202,222 @@
   "historySimilarity": 0.7,
   "dedupeAgainstSeen": true,
   "todayOnly": true,
-  "seenDays": 4
+  "seenDays": 4,
+  "groupByCompany": true,
+  "companyOrder": [
+    "NVIDIA",
+    "OpenAI",
+    "Anthropic",
+    "Google",
+    "字节跳动",
+    "百度",
+    "阿里",
+    "DeepSeek",
+    "智谱",
+    "xAI",
+    "Runway",
+    "DeepMind",
+    "上海创智学院",
+    "小红书",
+    "DeepL",
+    "腾讯",
+    "Carbon",
+    "Command Code",
+    "微软"
+  ],
+  "companyRules": [
+    {
+      "name": "DeepMind",
+      "kws": [
+        "DeepMind",
+        "AlphaGenome",
+        "MuJoCo"
+      ]
+    },
+    {
+      "name": "xAI",
+      "kws": [
+        "xAI",
+        "Grok",
+        "马斯克",
+        "SpaceX"
+      ]
+    },
+    {
+      "name": "字节跳动",
+      "kws": [
+        "字节",
+        "ByteDance",
+        "张一鸣",
+        "Spell",
+        "豆包"
+      ]
+    },
+    {
+      "name": "OpenAI",
+      "kws": [
+        "OpenAI",
+        "ChatGPT",
+        "Altman",
+        "奥特曼",
+        "Codex",
+        "Tibo",
+        "Sora",
+        "DALL"
+      ]
+    },
+    {
+      "name": "Anthropic",
+      "kws": [
+        "Anthropic",
+        "Claude",
+        "Opus"
+      ]
+    },
+    {
+      "name": "NVIDIA",
+      "kws": [
+        "NVIDIA",
+        "英伟达",
+        "黄仁勋"
+      ]
+    },
+    {
+      "name": "百度",
+      "kws": [
+        "百度",
+        "ERNIE",
+        "文心",
+        "百Du"
+      ]
+    },
+    {
+      "name": "阿里",
+      "kws": [
+        "阿里",
+        "Alibaba",
+        "Qwen",
+        "通义",
+        "千问"
+      ]
+    },
+    {
+      "name": "DeepSeek",
+      "kws": [
+        "DeepSeek",
+        "深度求索"
+      ]
+    },
+    {
+      "name": "智谱",
+      "kws": [
+        "智谱",
+        "ZCode",
+        "GLM"
+      ]
+    },
+    {
+      "name": "Runway",
+      "kws": [
+        "Runway",
+        "Praxis"
+      ]
+    },
+    {
+      "name": "上海创智学院",
+      "kws": [
+        "上海创智学院",
+        "Nex-N"
+      ]
+    },
+    {
+      "name": "小红书",
+      "kws": [
+        "小红书",
+        "dots.tts"
+      ]
+    },
+    {
+      "name": "DeepL",
+      "kws": [
+        "DeepL",
+        "Aure"
+      ]
+    },
+    {
+      "name": "腾讯",
+      "kws": [
+        "腾讯",
+        "Tencent",
+        "元宝"
+      ]
+    },
+    {
+      "name": "微软",
+      "kws": [
+        "微软",
+        "Microsoft"
+      ]
+    },
+    {
+      "name": "MiniMax",
+      "kws": [
+        "MiniMax",
+        "HeyGen"
+      ]
+    },
+    {
+      "name": "Cursor",
+      "kws": [
+        "Cursor"
+      ]
+    },
+    {
+      "name": "JetBrains",
+      "kws": [
+        "JetBrains"
+      ]
+    },
+    {
+      "name": "vLLM",
+      "kws": [
+        "vLLM"
+      ]
+    },
+    {
+      "name": "SGLang",
+      "kws": [
+        "SGLang"
+      ]
+    },
+    {
+      "name": "Carbon",
+      "kws": [
+        "^Carbon"
+      ]
+    },
+    {
+      "name": "Command Code",
+      "kws": [
+        "Command Code"
+      ]
+    },
+    {
+      "name": "Google",
+      "kws": [
+        "Google",
+        "谷歌",
+        "Gemini",
+        "Antigravity",
+        "Tabletop",
+        "CarPlay",
+        "Pixel",
+        "Gmail",
+        "Android",
+        "Chrome",
+        "MDN",
+        "Firefox"
+      ]
+    }
+  ]
 }
