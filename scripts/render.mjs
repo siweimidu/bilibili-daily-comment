@@ -330,17 +330,14 @@ for (const it of singles) entries.push(it.text.replace(/[；;。.\s、,，]+$/, 
 const shownEntries = cfg.maxLines > 0 ? entries.slice(0, cfg.maxLines) : entries;
 const lines = shownEntries.map((e, i) => (i + 1) + ". " + e);
 
-const header = day + " 置顶评论 · 共 " + lines.length + " 条（按公司归并）";
 const stat = "统计：当天视频 " + raw.stats.todayVideos + " / 有置顶 " + raw.stats.withPin + " / 无置顶跳过 " + raw.stats.noPin
   + " / 时间轴置顶 " + splitPins + " / 合并重复 " + kept.reduce((n, k) => n + k.sources - 1, 0)
   + " / 合并同事件 " + mergedSameEvent + " / 去已报道 " + seenRemoved
   + " / 归并前 " + finalItems.length + " 条 → 归并后 " + lines.length + " 条 / 异常 " + (raw.stats.errors ? raw.stats.errors.length : 0);
 
-const out = [header, ""].concat(lines.length ? lines : ["（今天没有可用的置顶评论）"]).concat(["", stat]).join("\n");
-const block = "```text\n" + out + "\n```";
-
+const listText = (lines.length ? lines : ["（今天没有可用的置顶评论）"]).join("\n");
 const reportFile = path.join(OUT_DIR, day, "report.md");
-fs.writeFileSync(reportFile, out + "\n");
-fs.writeFileSync(path.join(OUT_DIR, "latest.md"), out + "\n");
-fs.writeFileSync(path.join(OUT_DIR, "latest_block.txt"), block + "\n");
-console.log(out);
+fs.writeFileSync(reportFile, listText + "\n\n" + stat + "\n");
+fs.writeFileSync(path.join(OUT_DIR, "latest.md"), listText + "\n");
+fs.writeFileSync(path.join(OUT_DIR, "latest_block.txt"), "```text\n" + listText + "\n```\n");
+console.log(listText);
