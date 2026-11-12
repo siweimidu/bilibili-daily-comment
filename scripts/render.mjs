@@ -29,7 +29,8 @@ function trimEdges(s) {
 }
 
 function bigrams(s) {
-  const t = s.replace(/[\s\p{P}\p{S}]/gu, "");
+  // 只取中文字符做二元组：英文机构名（Google/Antigravity/Grok Bot）会把相似度灌水，导致误判
+  const t = String(s).replace(/[^\u4e00-\u9fff]/g, "");
   const set = new Set();
   for (let i = 0; i < t.length - 1; i++) set.add(t.slice(i, i + 2));
   return set;
@@ -183,13 +184,26 @@ function sameNews(a, b) {
     let inter = 0;
     for (const t of specA) if (specB.has(t)) inter++;
     const uni = specA.size + specB.size - inter;
-    if (inter >= 2 && uni && inter / uni >= 0.5) return true;
+    if (inter >= 2 && uni && inter / uni >= 0.5 && jaccard(a.grams, b.grams) >= 0.2) return true;
   }
   // 一方实体是另一方真子集（只有 Google/DeepMind/AI 泛实体打底）→ 是不同新闻，别并
   if (containment(a.tokens, b.tokens) >= 0.999) return false;
   // 其余情况：至少 2 个非泛词实体且包含度达标才算同一件事
   if (specific.length < 2) return false;
   return containment(a.tokens, b.tokens) >= cfg.tokenContainment;
+}
+
+// 去「已报道」：保守匹配，宁少删不误删
+function matchSeen(a, b) {
+  const jc = jaccard(a.grams, b.grams);
+  const bothCN = a.grams.size >= 3 && b.grams.size >= 3; // 中文内容够长，中文字面比较才可信
+  if (bothCN && jc >= 0.6) return true;                   // 中文表述高度一致
+  const shared = [...a.tokens].filter((t) => b.tokens.has(t));
+  const spec = shared.filter((t) => !genericTokens.has(t));
+  const identical = a.tokens.size === b.tokens.size && shared.length === a.tokens.size;
+  if (identical && spec.length >= 1 && (a.tokens.size >= 3 || (bothCN && jc >= 0.5))) return true; // 实体集合相同且足够具体
+  if (bothCN && spec.length >= 2 && jc >= 0.45) return true; // ≥2 独特实体相同且中文高度相似
+  return false;
 }
 
 const kept = [];
@@ -206,8 +220,23 @@ for (const cand of pool) {
   kept.push(rec);
 }
 
-// —— 不做跨天去旧闻，所有当日条目全部保留 ——
+// —— 去「已报道」：拿指定账号（默认求源索解）发过的时间轴清单做基数，去掉已报过的 ——
 let finalItems = kept;
+let seenRemoved = 0;
+if (cfg.dedupeAgainstSeen) {
+  try {
+    const seenRaw = JSON.parse(fs.readFileSync(path.join(OUT_DIR, "_seen.json"), "utf8"));
+    const seenSig = [];
+    for (const s of seenRaw) for (const t of extractListItems(s.text)) seenSig.push({ text: t, grams: bigrams(t), tokens: tokens(t) });
+    if (seenSig.length) {
+      finalItems = finalItems.filter((k) => {
+        const hitSig = seenSig.find((s) => matchSeen(k, s));
+        if (hitSig) { seenRemoved += 1; if (process.env.DEBUG_SEEN) console.error("[REMOVED] " + k.text + "   <=   " + hitSig.text); return false; }
+        return true;
+      });
+    }
+  } catch (e) { /* 没建过 _seen.json 就跳过 */ }
+}
 
 if (cfg.sortMode === "heat") finalItems.sort((a, b) => b.heat - a.heat || b.sources - a.sources || b.views - a.views);
 else finalItems.sort((a, b) => b.sources - a.sources || b.heat - a.heat || b.views - a.views);
@@ -234,7 +263,7 @@ const lines = shown.map((it, i) => {
 const header = day + " 置顶评论 · 共 " + shown.length + " 条";
 const stat = "统计：当天视频 " + raw.stats.todayVideos + " / 有置顶 " + raw.stats.withPin + " / 无置顶跳过 " + raw.stats.noPin
   + " / 时间轴置顶 " + splitPins + " / 合并重复 " + kept.reduce((n, k) => n + k.sources - 1, 0)
-  + " / 共 " + shown.length + " 条 / 异常 " + (raw.stats.errors ? raw.stats.errors.length : 0);
+  + " / 去已报道 " + seenRemoved + " / 共 " + shown.length + " 条 / 异常 " + (raw.stats.errors ? raw.stats.errors.length : 0);
 
 const out = [header, ""].concat(lines.length ? lines : ["（今天没有可用的置顶评论）"]).concat(["", stat]).join("\n");
 
