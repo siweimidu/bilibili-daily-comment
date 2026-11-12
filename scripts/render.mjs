@@ -307,7 +307,8 @@ const order = cfg.companyOrder || [];
 const groups = new Map();
 const singles = [];
 for (const it of finalItems) {
-  const co = detectCompany(it.text);
+  let co = detectCompany(it.text);
+  if (co && cfg.companyParent && cfg.companyParent[co]) co = cfg.companyParent[co]; // 被收购/子品牌上并到母公司
   if (co) { if (!groups.has(co)) groups.set(co, []); groups.get(co).push(it); }
   else singles.push(it);
 }
