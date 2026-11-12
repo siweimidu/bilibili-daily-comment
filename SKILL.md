@@ -191,3 +191,12 @@ C:/Code/skills/bilibili-daily-comment/   （软链到 ~/.agents/skills/）
 5. 公司识别规则见 `config.json` 的 `companyRules`；识别不到的零散条目，保留原文单列在最后。
 
 > 渲染会自动写出 `out/latest.md`（纯文本）与 `out/latest_block.txt`（含 ```text 围栏，可直接复制）。
+
+### 输出代码块要求（补充 · 明确）
+
+- **代码块里只放 `1. 2. 3. …` 的序号清单**，不要放标题、日期、统计等任何多余文字；第一个字符就是「1.」。
+- 公司归属以「最终母公司/归属方」为准，例：
+  - **Carbon（Gemini 4 Carbon 的实测）→ Google**
+  - **DeepMind → Google**（DeepMind 是谷歌子公司）
+  - **Cursor → xAI**（按用户口径归到 xAI）
+- 归属规则维护在 `config.json` 的 `companyRules`，排序在 `companyOrder`。
