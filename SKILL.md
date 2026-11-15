@@ -7,15 +7,19 @@ description: 抓取指定 B 站 UP 主「当天全部视频」的置顶评论，
 
 抓一组 UP 主「当天发布的所有视频」的**置顶评论**，把里面的 AI 资讯拆出来，去重、去旧闻、去噪音，按热度排序，输出一行一条的纯资讯。
 
-## 标准用法（一句话跑完）
+## 快速开始（下载后直接交给 Agent，本地就能跑）
 
-~~~powershell
-& "C:/Users/35238/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/node/bin/node.exe" "C:/Code/skills/bilibili-daily-comment/scripts/daily.mjs"
+本技能是**纯 Node 脚本，主流程零第三方依赖**。把整个文件夹交给 Agent，在本目录执行：
+
+~~~bash
+node scripts/daily.mjs
 ~~~
 
-- 默认抓**北京时间当天**；指定日期加 `--date 2026-10-28`
-- 打印到 stdout，同时写 `out/<日期>/report.md` 和 `out/latest.md`
-- 用户要的就是这份清单：**原样贴出去**，不要加分栏、不要补账号名、不要补热度
+- 默认抓**北京时间当天（只要当天，不含昨天）**；指定日期加 `--date 2026-11-12`
+- 结果写 `out/latest.md` 与 `out/latest_block.txt`（可直接复制的代码块），并打印到 stdout
+- **登录（推荐但非必须）**：B站有风控，登录态更稳。扫码登录：`pnpm install`（仅装 `qrcode`）后 `node scripts/login.mjs`；或把 `cookies.example.json` 复制成 `.cookie/cookies.json` 填好 `SESSDATA` / `DedeUserID`。不登录也能跑，只是成功率低。
+- 监控账号改 `ups.json`；已报道基准账号改 `seen.json`；公司归属/排序改 `config.json`。
+- 用户要的就是这份清单：**原样贴出去**，不要加分栏、不要补账号名、不要补热度。
 
 ## 输出长什么样
 
@@ -29,9 +33,9 @@ description: 抓取指定 B 站 UP 主「当天全部视频」的置顶评论，
 
 **行内只有资讯正文**：不带账号名、不带 `（热度 …）`、不带 BV 号、不带时间戳。要改的话看 config 的 `showSource`。
 
-## 过滤链（顺序有意义，别乱调）
+## 过滤链（已废弃 — 本版本已移除内容过滤）
 
-一条置顶先被时间戳切成一条条候选，然后逐个过闸：
+> ⚠️ 本节是旧版说明，**当前版本已不做内容过滤**（章节/非AI/动作词/旧闻等过滤全部移除）。当前行为见文末《去重规范》《排布与排序规范》《公司归属》。以下内容仅作历史参考。
 
 1. `chapterPatterns` — 章节标题（输出示例/价格/跑分/开场…）直接扔
 2. 含 `http` / `b23.tv` / `BV…` 的导流行扔掉
