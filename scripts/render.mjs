@@ -90,7 +90,7 @@ function cleanTitle(s) {
 const pool = [];
 let splitPins = 0;
 
-const HEADER_RE = /^(今日内容|今日要闻|本期看点|AI动态|AI ?动态|科技公司|模型排行榜|AI产品与模型|产品与模型|安全与监管|安全监管|算力与能源|算力能源|头条|资讯|前瞻|目录|导语|总结|结尾|开场|片尾致谢)\s*[:：]?$/;
+const HEADER_RE = /^(今日内容|今日要闻|本期看点|AI动态|AI ?动态|科技公司|模型排行榜|AI产品与模型|产品与模型|安全与监管|安全监管|算力与能源|算力能源|公司与算力|公司与模型|AI安全|头条|资讯|前瞻|目录|导语|总结|结尾|开场|片尾致谢)\s*[:：]?$/;
 
 function cleanItemLine(s) {
   s = String(s).trim();
@@ -281,6 +281,14 @@ const beforeMerge = finalItems.length;
 finalItems = mergeSameEventPass(finalItems);
 const mergedSameEvent = beforeMerge - finalItems.length;
 
+// 导出用于「热度 TopN」的条目（含 heat/sources）
+try {
+  fs.writeFileSync(
+    path.join(OUT_DIR, "_final_items.json"),
+    JSON.stringify(finalItems.map((k) => ({ text: k.text, heat: k.heat || 0, sources: k.sources || 1, views: k.views || 0 })), null, 2)
+  );
+} catch { /* ignore */ }
+
 // 重要性打分：动作词越多越靠前（组内排序用）
 const IMP_WORDS = ["IPO", "收购", "并购", "融资", "罢免", "离职", "起诉", "发布", "开源", "上线", "推出", "正式", "重大", "首次", "免费", "开放", "突破", "登顶", "裁员"];
 function impScore(t) { let s = 0; for (const k of IMP_WORDS) if (t.includes(k)) s += 1; return s; }
@@ -288,16 +296,25 @@ function impScore(t) { let s = 0; for (const k of IMP_WORDS) if (t.includes(k)) 
 // —— 按公司归并 + 按重要性排序（用户规范）——
 function detectCompany(text) {
   const rules = cfg.companyRules || [];
+  let best = null, bestIdx = Infinity;
   for (const r of rules) {
     for (const kw of (r.kws || [])) {
-      if (kw.startsWith("^")) { if (new RegExp(kw, "i").test(text)) return r.name; }
-      else if (/[A-Za-z]/.test(kw)) {
+      let idx = -1;
+      if (kw.startsWith("^")) {
+        const m = new RegExp(kw, "i").exec(text);
+        if (m) idx = m.index;
+      } else if (/[A-Za-z]/.test(kw)) {
         const esc = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        if (new RegExp("(^|[^A-Za-z])" + esc + "([^A-Za-z]|$)", "i").test(text)) return r.name;
-      } else if (text.includes(kw)) return r.name;
+        const m = new RegExp("(^|[^A-Za-z])(" + esc + ")(?=[^A-Za-z]|$)", "i").exec(text);
+        if (m) idx = m.index + m[1].length;
+      } else {
+        const p = text.indexOf(kw);
+        if (p >= 0) idx = p;
+      }
+      if (idx >= 0 && idx < bestIdx) { bestIdx = idx; best = r.name; }
     }
   }
-  return null;
+  return best;   // 取「在标题里出现最早」的公司，避免提到的竞品抢了主语
 }
 
 // 组内/组间默认按热度（≈重要性）
