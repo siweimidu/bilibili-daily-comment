@@ -275,7 +275,19 @@
     "中兴",
     "荣耀",
     "OPPO",
-    "vivo"
+    "vivo",
+    "Vercel",
+    "Cognition",
+    "World Labs",
+    "Sierra",
+    "LangChain",
+    "Liquid AI",
+    "Hark",
+    "Mirendil",
+    "Blank Bio",
+    "智元",
+    "Edge0",
+    "Artificial Analysis"
   ],
   "companyRules": [
     {
@@ -297,7 +309,9 @@
         "张一鸣",
         "Spell",
         "豆包",
-        "Doubao"
+        "Doubao",
+        "CapCut",
+        "剪映"
       ]
     },
     {
@@ -310,7 +324,11 @@
         "Codex",
         "Tibo",
         "Sora",
-        "DALL"
+        "DALL",
+        "GPT",
+        "GPT-6.2",
+        "GPT‑6.2",
+        "Astra"
       ]
     },
     {
@@ -318,7 +336,9 @@
       "kws": [
         "Anthropic",
         "Claude",
-        "Opus"
+        "Opus",
+        "Amodei",
+        "Fable"
       ]
     },
     {
@@ -326,7 +346,8 @@
       "kws": [
         "NVIDIA",
         "英伟达",
-        "黄仁勋"
+        "黄仁勋",
+        "GR00T"
       ]
     },
     {
@@ -400,7 +421,9 @@
         "TX",
         "微信",
         "WeChat",
-        "QQ"
+        "QQ",
+        "混元",
+        "Hy Realtime"
       ]
     },
     {
@@ -408,14 +431,19 @@
       "kws": [
         "微软",
         "Microsoft",
-        "Copilot"
+        "Copilot",
+        "MAI-",
+        "MAI"
       ]
     },
     {
       "name": "MiniMax",
       "kws": [
         "MiniMax",
-        "HeyGen"
+        "HeyGen",
+        "H3-Image",
+        "H3‑Image",
+        "H3Image"
       ]
     },
     {
@@ -472,14 +500,17 @@
         "Chrome",
         "MDN",
         "Firefox",
-        "Carbon"
+        "Carbon",
+        "Hydrogen",
+        "Gemini 4"
       ]
     },
     {
       "name": "Meta",
       "kws": [
         "Meta",
-        "Llama"
+        "Llama",
+        "Muse"
       ]
     },
     {
@@ -535,7 +566,8 @@
       "name": "网易",
       "kws": [
         "网易",
-        "NetEase"
+        "NetEase",
+        "有道"
       ]
     },
     {
@@ -826,6 +858,89 @@
       "name": "vivo",
       "kws": [
         "vivo"
+      ]
+    },
+    {
+      "name": "Vercel",
+      "kws": [
+        "Vercel"
+      ]
+    },
+    {
+      "name": "Cognition",
+      "kws": [
+        "Cognition",
+        "Devin",
+        "SWE-2"
+      ]
+    },
+    {
+      "name": "World Labs",
+      "kws": [
+        "World Labs",
+        "李飞飞",
+        "Atlas"
+      ]
+    },
+    {
+      "name": "Sierra",
+      "kws": [
+        "Sierra",
+        "Poppy"
+      ]
+    },
+    {
+      "name": "LangChain",
+      "kws": [
+        "LangChain",
+        "LangGraph"
+      ]
+    },
+    {
+      "name": "Liquid AI",
+      "kws": [
+        "Liquid AI",
+        "LiquidCodec"
+      ]
+    },
+    {
+      "name": "Hark",
+      "kws": [
+        "Hark",
+        "Handoff"
+      ]
+    },
+    {
+      "name": "Mirendil",
+      "kws": [
+        "Mirendil"
+      ]
+    },
+    {
+      "name": "Blank Bio",
+      "kws": [
+        "Blank Bio",
+        "Ladon"
+      ]
+    },
+    {
+      "name": "智元",
+      "kws": [
+        "智元",
+        "AgiBot",
+        "WITA"
+      ]
+    },
+    {
+      "name": "Edge0",
+      "kws": [
+        "Edge0"
+      ]
+    },
+    {
+      "name": "Artificial Analysis",
+      "kws": [
+        "Artificial Analysis"
       ]
     }
   ],
