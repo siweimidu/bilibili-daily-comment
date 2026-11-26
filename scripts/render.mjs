@@ -90,7 +90,7 @@ function cleanTitle(s) {
 const pool = [];
 let splitPins = 0;
 
-const HEADER_RE = /^(今日内容|今日要闻|本期看点|AI动态|AI ?动态|科技公司|模型排行榜|AI产品与模型|产品与模型|安全与监管|安全监管|算力与能源|算力能源|公司与算力|公司与模型|AI安全|头条|资讯|前瞻|目录|导语|总结|结尾|开场|片尾致谢)\s*[:：]?$/;
+const HEADER_RE = /^(今日内容|今日要闻|本期看点|本期回顾|AI动态|AI ?动态|科技公司|模型排行榜|AI产品与模型|产品与模型|安全与监管|安全监管|算力与能源|算力能源|算力与公司|公司与算力|公司与模型|产业与算力|评测与公司|芯片与算力|隐私与政策|研究与评测|研究与安全|安全与隐私|数据与安全|数学研究|研究与数学|安全与防护|模型研究与发布|AI安全与隐私|AI内容规则|更新日志|诉讼与市场|本期提到的项目|算力与推理|超级智能风险|AI安全|头条|资讯|前瞻|目录|导语|总结|结尾|开场|片尾致谢)\s*[:：]?$/;
 
 function cleanItemLine(s) {
   s = String(s).trim();
@@ -106,10 +106,23 @@ function cleanItemLine(s) {
 
 function isJunk(s) {
   if (!s) return true;
-  if (/^https?:\/\//i.test(s)) return true;
+  if (/https?:\/\//i.test(s)) return true;
   const em = s.replace(/^[\s📌🤖💡🔥⭐️🔔📢•·]+/, "").trim();
   if (HEADER_RE.test(em)) return true;
   if (/^(开场速览|片尾致谢|今日速览|本期速览)\s*[：:]/.test(em)) return true;
+  if (/^(官方示例|输出示例|示例\s*\d|补充一张图|使用范围|API ?价格|今日\s*GitHub|本期回顾)/i.test(em)) return true;
+  if (/^\d{1,2}\s*月\s*\d{1,2}\s*日.{0,14}(早报|日报|晚报)/.test(em)) return true;
+  if (/其实今天|发晚了|义父们|没有什么内容/.test(em)) return true;
+  if (/赞助|广告位|商务合作/.test(em)) return true;
+  if (/^[A-Za-z0-9._-]+\s*推荐$/.test(em)) return true;
+  if (/推广$/.test(em)) return true;
+  if (/^[a-z0-9.-]+\.(com|cn|ai|net|io|org)$/i.test(em)) return true;
+  if (/^[a-z0-9.-]+\.[a-z]{2,}\//i.test(em)) return true;
+  if (/还在.{0,4}更新|打call|持续更新/.test(em)) return true;
+  if (/WorkBuddy ?成长|成长计划积分/.test(em)) return true;
+  if (/羊毛党|正价渠道的胜利|噩梦！$|悲报|白嫖/.test(em)) return true;
+  if (/正规国模授权|官方合作商|npm install|hsk-cli|安装：/.test(em)) return true;
+  if (/^(明天见|下期见|再见|本期完)$/.test(em)) return true;
   if (/^[📌🤖💡🔥⭐️🔔📢]{1,2}\s*$/.test(s)) return true;
   if (em.length <= 2) return true;
   return false;
@@ -160,7 +173,7 @@ for (const it of raw.items) {
     for (const p of chosen) pool.push({ text: tag + p, heat: src === "pin" ? (Number(it.pinLikes) || 0) : 0, bvid: it.bvid, views: it.views, src });
   } else {
     const t2 = cleanTitle(it.title);
-    if (t2) pool.push({ text: tag + t2, heat: 0, bvid: it.bvid, views: it.views, src: "title" });
+    if (t2 && !isJunk(t2)) pool.push({ text: tag + t2, heat: 0, bvid: it.bvid, views: it.views, src: "title" });
   }
 }
 
@@ -213,13 +226,28 @@ function matchSeen(a, b) {
 // —— 跨账号同事件合并：同一件事不同账号不同措辞，并成一条 ——
 function jacSets(A, B) { let i = 0; for (const x of A) if (B.has(x)) i++; const u = A.size + B.size - i; return u ? i / u : 0; }
 function strongSet(tk) { const s = new Set(); for (const t of tk) { if (genericTokens.has(t)) continue; if (/^\d/.test(t)) continue; s.add(t); } return s; }
+function cjkContain(A, B) { const m = Math.min(A.size, B.size); if (!m) return 0; let i = 0; for (const x of A) if (B.has(x)) i++; return i / m; }
+const DFILLER = /(服务|产品|能力|功能|模型|系统|版本|团队|平台|工具|技术|相关|进行|推出|发布|正式|开始|继续|测试|宣布|新增|升级|支持|上线|报道|据称|传闻|消息|今日|今天|刚刚|正式版|预览版)/g;
+function dgrams(s) {
+  let t = String(s || "").replace(/私密/g, "私有").replace(/具身/g, "").replace(/独立/g, "");
+  t = t.replace(DFILLER, "").replace(/[^\u4e00-\u9fff]/g, "");
+  const set = new Set();
+  for (let i = 0; i < t.length - 1; i++) set.add(t.slice(i, i + 2));
+  return set;
+}
 function sameEvent(a, b) {
   if (sameNews(a, b)) return true;
+  const da = dgrams(a.text), db = dgrams(b.text);
+  const bothCN = da.size >= 2 && db.size >= 2;
+  const jc = jaccard(da, db);
+  const cc = cjkContain(da, db);
+  // 去掉同义/填充词后，中文高度相似或一方是另一方的高包含子集 → 同一事件
+  if (bothCN && (jc >= 0.5 || cc >= 0.7)) return true;
   const sa = strongSet(a.tokens), sb = strongSet(b.tokens);
   let inter = 0;
   for (const x of sa) if (sb.has(x)) inter += 1;
-  if (!inter) return false;                    // 没有共同的独特实体 → 不是同一件事
-  if (jacSets(a.tokens, b.tokens) >= 0.5) return true; // 词集重合度高 → 合并
+  if (inter >= 1 && jacSets(a.tokens, b.tokens) >= 0.4) return true; // 独特实体重合且词集较像
+  if (inter >= 2 && jc >= 0.1) return true;                         // ≥2 独特实体相同
   return false;
 }
 function mergeSameEventPass(items) {
