@@ -13,6 +13,7 @@ if (!fs.existsSync(rawFile)) {
   process.exit(1);
 }
 const raw = readJson(rawFile);
+const isWindow = Number(raw.windowHours) > 0;
 
 const norm = (s) => String(s).replace(/\r/g, "").replace(/\s+/g, " ").trim();
 
@@ -113,11 +114,16 @@ function isJunk(s) {
   if (/^(官方示例|输出示例|示例\s*\d|补充一张图|使用范围|API ?价格|今日\s*GitHub|本期回顾)/i.test(em)) return true;
   if (/^\d{1,2}\s*月\s*\d{1,2}\s*日.{0,14}(早报|日报|晚报)/.test(em)) return true;
   if (/其实今天|发晚了|义父们|没有什么内容/.test(em)) return true;
+  if (/每晚.{0,8}更新|本期\d+条|重点看.{0,12}动态|盒中之神|乌托邦|贵\s*\d+\s*倍还做错题/.test(em)) return true;
   if (/赞助|广告位|商务合作/.test(em)) return true;
   if (/^[A-Za-z0-9._-]+\s*推荐$/.test(em)) return true;
   if (/推广$/.test(em)) return true;
   if (/^[a-z0-9.-]+\.(com|cn|ai|net|io|org)$/i.test(em)) return true;
   if (/^[a-z0-9.-]+\.[a-z]{2,}\//i.test(em)) return true;
+  if (/[：:]$/.test(em)) return true;                                  // 冒号结尾 = 小标题
+  if (/^[\u4e00-\u9fff]{2,6}$/.test(em)) return true;                 // 纯短中文标签（模型榜/厂商回应…）
+  if (/^[\u4e00-\u9fffA-Za-z0-9 ·]{2,8}$/.test(em)) return true;      // 极短标签（Colab 终端/AI 治理…）
+  if (/当期总览|开场导览|本期总结与互动|本期还讲了|官方信源|片头与今日概览|法律与合规|模型榜|空巢老梁|大家一定要注意|网页灰度本轮明细/.test(em)) return true;
   if (/还在.{0,4}更新|打call|持续更新/.test(em)) return true;
   if (/WorkBuddy ?成长|成长计划积分/.test(em)) return true;
   if (/羊毛党|正价渠道的胜利|噩梦！$|悲报|白嫖/.test(em)) return true;
@@ -140,7 +146,12 @@ function extractListItems(text) {
     src = lines.filter((l) => /\d{1,2}:\d{2}/.test(l));
   } else {
     const numbered = lines.filter((l) => /^\s*\d{1,2}\s*[.、．:：)）·]/.test(l));
-    src = numbered.length ? numbered : lines;
+    if (!numbered.length) {
+      // 散文 / 无编号：整段作为一条（避免把小标题/碎词逐行拆成假条目）
+      const whole = cleanItemLine(lines.join(" "));
+      return (!whole || isJunk(whole) || whole.length < 6) ? [] : [whole];
+    }
+    src = numbered;
   }
   const out = [];
   for (const ln of src) {
@@ -155,9 +166,11 @@ for (const it of raw.items) {
   const text = String(it.text || "");
   const desc = String(it.desc || "").trim();
   // 【硬约束】只要当天：视频发布日期不是今天的，一律不要（连 --full 兜底的昨天数据也丢掉）
-  if (cfg.todayOnly !== false && it.videoDate && it.videoDate !== raw.date) continue;
-  // --full 兜底来的、属于别的日期的视频，条目前面标一下日期，避免把昨天新闻当今天
-  const tag = it.isFallback && it.videoDate && it.videoDate !== raw.date ? "〔" + it.videoDate.slice(5) + "〕" : "";
+  if (!isWindow && cfg.todayOnly !== false && it.videoDate && it.videoDate !== raw.date) continue;
+  // 滚动窗口模式下不显示日期前缀；兜底/跨日的才标日期
+  const tag = isWindow
+    ? ""
+    : (it.isFallback && it.videoDate && it.videoDate !== raw.date ? "〔" + it.videoDate.slice(5) + "〕" : "");
   const pinItems = text ? extractListItems(text) : [];
   const descItems = desc.length >= 8 ? extractListItems(desc) : [];
   const sumLen = (a) => a.reduce((n, s) => n + s.length, 0);
@@ -242,11 +255,11 @@ function sameEvent(a, b) {
   const jc = jaccard(da, db);
   const cc = cjkContain(da, db);
   // 去掉同义/填充词后，中文高度相似或一方是另一方的高包含子集 → 同一事件
-  if (bothCN && (jc >= 0.5 || cc >= 0.7)) return true;
+  if (bothCN && (jc >= 0.3 || cc >= 0.5)) return true;
   const sa = strongSet(a.tokens), sb = strongSet(b.tokens);
   let inter = 0;
   for (const x of sa) if (sb.has(x)) inter += 1;
-  if (inter >= 1 && jacSets(a.tokens, b.tokens) >= 0.4) return true; // 独特实体重合且词集较像
+  if (inter >= 1 && jacSets(a.tokens, b.tokens) >= 0.3) return true; // 独特实体重合且词集较像
   if (inter >= 2 && jc >= 0.1) return true;                         // ≥2 独特实体相同
   return false;
 }
