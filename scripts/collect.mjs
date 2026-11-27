@@ -10,6 +10,9 @@ const argv = process.argv.slice(2);
 const dIdx = argv.indexOf("--date");
 const day = dIdx >= 0 ? argv[dIdx + 1] : shanghaiDay();
 const full = argv.includes("--full");
+const hIdx = argv.indexOf("--hours");
+const windowHours = hIdx >= 0 ? Number(argv[hIdx + 1]) : 0;
+const cutoff = windowHours > 0 ? Math.floor(Date.now() / 1000) - windowHours * 3600 : null;
 
 const stats = { ups: ups.length, listed: 0, todayVideos: 0, withPin: 0, noPin: 0, fallback: 0, errors: [] };
 const viaCount = {};
@@ -27,7 +30,7 @@ for (const up of ups) {
     continue;
   }
   stats.listed += vlist.length;
-  const todays = vlist.filter((v) => shanghaiDayOfUnix(v.created) === day);
+  const todays = vlist.filter((v) => (cutoff != null ? v.created >= cutoff : shanghaiDayOfUnix(v.created) === day));
   stats.todayVideos += todays.length;
   // --full：某账号今天还没发，就用它最新一条视频（置顶或简介）兜底，保证覆盖全部账号
   let picked = todays;
@@ -78,7 +81,7 @@ for (const up of ups) {
 
 const dir = path.join(OUT_DIR, day);
 fs.mkdirSync(dir, { recursive: true });
-const payload = { date: day, generatedAt: new Date().toISOString(), loggedIn: hasLogin(), stats, items };
+const payload = { date: windowHours > 0 ? "近" + windowHours + "小时" : day, windowHours, generatedAt: new Date().toISOString(), loggedIn: hasLogin(), stats, items };
 const rawFile = path.join(dir, "raw.json");
 fs.writeFileSync(rawFile, JSON.stringify(payload, null, 2));
 
